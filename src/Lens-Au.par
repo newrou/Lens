@@ -1,0 +1,43 @@
+// Lens
+Cell: 100
+Wall: 30
+thikness: 1000
+density: 8.902
+WightToEdge: 20
+HeightToEdge: 20
+LensWidth: 20
+LensHeight: 20
+
+// Screen
+ScreenX: 10000
+ScreenY: 10000
+WidthScreen: 100
+HeightScreen: 100
+
+// Settings
+WidthSource: 10
+HeightSource: 10
+StartEnergy: 30
+LengthSourceObject:  100
+LengthObjectLens: 0
+LengthLensScreen: 1000
+MaxAngleSource: 10
+NStart: 100
+
+// Steps
+AmountOfScattering: 0
+MaxAngleScatering: 5
+Step: 100
+AngleStep: 0.1
+AngleRadStep: 10
+
+// Object
+ObjectWidth: 10
+ObjectHeight: 10
+ObjectThikness: 10
+
+// Count Of Threads
+CountOfThreads: 1
+writePathOfFile: Lens.out
+TypeMaterial: Au
+

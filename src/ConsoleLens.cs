@@ -1,13 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+//using System.Data;
+//using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Collections;
 using System.IO;
 
@@ -107,10 +106,13 @@ public struct Vector3
     }
 }
 
-namespace Lens
+
+namespace ConsoleLens
 {
-    public partial class Form1 : Form
+
+    class Program
     {
+
         // Масштаб в программе 1 юнит = 1 мкм
         int scale = 1000;
         int scale_cm2mm = 10;
@@ -121,7 +123,8 @@ namespace Lens
         // Стандартные величины
 
         double r0 = 2.8179 * Math.Pow(10, -15);
-
+        double[] MaterialDensity = { 8.902, 19.32, 2.6989 };
+        double[] MaterialM0 = { 58.6934, 196.966569, 26.9815386 };
 
         // Материалы
         // таблица поглощений
@@ -159,6 +162,7 @@ namespace Lens
         double HeightToEdge = 20; // μm
         double LensWidth = 20; // mm
         double LensHeight = 20; // mm
+        int TypeMaterial = 0;
 
         // Screen
 
@@ -180,7 +184,7 @@ namespace Lens
 
         // Steps
 
-        int AmountOfScattering = 2;
+        int AmountOfScattering = 0;
         double MaxAngleScatering = 5; // rad
         double Step = 100; // μm
         double AngleStep = 0.1; // rad
@@ -217,12 +221,12 @@ namespace Lens
         {100, 30, 1000, 8.902, 20, 20, 20, 20,
             10000, 10000, 100, 100,
             10, 10, 30, 100, 0, 1000, 10, 100,
-            2, 10, 100, 0.1, 10,
+            0, 10, 100, 0.1, 10,
             10, 10, 10,
             1 };
 
-        Label[] LabelBox;
-        TextBox[] ArrayTextBox;
+        //Label[] LabelBox;
+        //TextBox[] ArrayTextBox;
 
         // Переменные для расчётов
         public double[,] ArrayPointScreen;
@@ -238,35 +242,40 @@ namespace Lens
 
         //ComboBox comboBoxMaterial;
 
-        TextBox NameTextBox = new TextBox();
-        Label LabelNameTextBox = new Label();
+        //TextBox NameTextBox = new TextBox();
+        //Label LabelNameTextBox = new Label();
         string writePathOfFolder = @"C:\Lens\";
         string writePathOfFile = "Test1";
         string writeOfExtension = ".txt";
+
 
         // Потоки и их 
         List<Thread> myThreads = new List<Thread>();
         List<int> ProgressTreads = new List<int>();
 
         // Инициализация Form
-        public Form1()
-        {
-            InitializeComponent();
-        }
 
-        private void Form1_Load(object sender, EventArgs e)
+        static void Main(string[] args)
         {
-            //Console.WriteLine(PhotonInteractionCoefficients.Length / 6);
-            Initialization();
+            Program method = new Program();
+            method.Initialization(args[0]);
+
+            Console.WriteLine("Start solve?");
+            String go = "";
+            go = Console.ReadLine();
+
+            if (go == "yes")
+                method.SolveOneThread();
+            else
+                Environment.Exit(0);
         }
 
         // Получение параметров задачи
-        void Initialization()
+        public void Initialization(string ParameterFileName)
         {
             SetTables();
-
-            CreateUI();
-            GetSettings();
+            
+            GetSettings(ParameterFileName);
             CreateArrayScreen();
         }
 
@@ -569,132 +578,106 @@ namespace Lens
 
 
         }
-
-        // Размещение текстовых полей;
-        void CreateUI()
-        {
-            ArrayTextBox = new TextBox[ArrayOfNames.Length];
-            LabelBox = new Label[ArrayOfNames.Length];
-            int k = 0;
-            int dx = 220;
-            int dy = 30;
-            int x = 120;
-            int y = 0;
-            int yLabel = 5;
-
-
-            for (int t = 0; t < Grupps.Length; t++)
-            {
-
-                y += dy;
-                Label label = new Label();
-                this.Controls.Add(label);
-                label.Size = new Size(110, 25);
-                label.Location = new Point(x - 110, yLabel);
-                label.Text = NameOfGrupps[t];
-
-                for (int i = 0; i < Grupps[t]; i++)
-                {
-                    ArrayTextBox[k] = new TextBox();
-                    this.Controls.Add(ArrayTextBox[k]);
-                    ArrayTextBox[k].Size = new Size(80, 25);
-                    if (y > (Grupps[t]) * dy)
-                    {
-                        x += dx;
-                        y = dy;
-                    }
-                    else
-                        y += dy;
-
-                    ArrayTextBox[k].Location = new Point(x, y);
-                    ArrayTextBox[k].Text = Parameters[k].ToString();
-
-                    LabelBox[k] = new Label();
-                    this.Controls.Add(LabelBox[k]);
-                    LabelBox[k].Size = new Size(110, 25);
-                    LabelBox[k].Location = new Point(x - 110, y);
-                    LabelBox[k].Text = ArrayOfNames[k].ToString();
-                    k++;
-                }
-            }
-
-            this.Controls.Add(NameTextBox);
-            NameTextBox.Size = new Size(80, 25);
-            y += dy;
-
-            NameTextBox.Location = new Point(x, y);
-            NameTextBox.Text = writePathOfFile;
-
-            LabelNameTextBox = new Label();
-            this.Controls.Add(NameTextBox);
-            LabelNameTextBox.Size = new Size(110, 25);
-            LabelNameTextBox.Location = new Point(x - 110, y);
-            LabelNameTextBox.Text = "Name of file";
-
-
-            comboBoxMaterial.SelectedIndex = 0;
-
-        }
-
-        // Запоминание настроек
-        private void SaveButton_Click(object sender, EventArgs e)
-        {
-            GetSettings();
-        }
+        
 
         // Получение настроек для расчётов
-        void GetSettings()
+        void GetSettings(string ParameterFileName)
         {
-            for (int i = 0; i < ArrayTextBox.Length; i++)
-                Parameters[i] = Convert.ToDouble(ArrayTextBox[i].Text.Replace('.', ','));
 
+// *** Begin of Read Parameters
 
-            // Lens
+        Console.WriteLine("Parameter file: {0}", ParameterFileName);
+        try
+        {
+            using (StreamReader file = new StreamReader(ParameterFileName))
+            {
+		string line;
+		while((line = file.ReadLine()) != null)
+		    {
+//			System.Console.WriteLine(line);
+			// Lens
+			if(line.IndexOf("Cell:")==0) { Cell = Convert.ToDouble(line.Replace("Cell:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("Wall:")==0) { Wall = Convert.ToDouble(line.Replace("Wall:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("thikness:")==0) { thikness = Convert.ToDouble(line.Replace("thikness:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("density:")==0) { density = Convert.ToDouble(line.Replace("density:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("WightToEdge:")==0) { WightToEdge = Convert.ToDouble(line.Replace("WightToEdge:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("HeightToEdge:")==0) { HeightToEdge = Convert.ToDouble(line.Replace("HeightToEdge:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LensWidth:")==0) { LensWidth = scale * Convert.ToDouble(line.Replace("LensWidth:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LensHeight:")==0) { LensHeight = scale * Convert.ToDouble(line.Replace("LensHeight:", "").Replace('.', ',')); continue; }
+// Screen
+			if(line.IndexOf("ScreenX:")==0) { ScreenX = (int)Convert.ToDouble(line.Replace("ScreenX:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("ScreenY:")==0) { ScreenY = (int)Convert.ToDouble(line.Replace("ScreenY:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("WidthScreen:")==0) { WidthScreen = scale * Convert.ToDouble(line.Replace("WidthScreen:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("HeightScreen:")==0) { HeightScreen = scale * Convert.ToDouble(line.Replace("HeightScreen:", "").Replace('.', ',')); continue; }
+// Settings
+			if(line.IndexOf("WidthSource:")==0) { WidthSource = scale * Convert.ToDouble(line.Replace("WidthSource:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("HeightSource:")==0) { HeightSource = scale * Convert.ToDouble(line.Replace("HeightSource:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("StartEnergy:")==0) { StartEnergy = Convert.ToDouble(line.Replace("StartEnergy:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LengthSourceObject:")==0) { LengthSourceObject = scale * Convert.ToDouble(line.Replace("LengthSourceObject:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LengthObjectLens:")==0) { LengthObjectLens = scale * Convert.ToDouble(line.Replace("LengthObjectLens:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LengthLensScreen:")==0) { LengthLensScreen = scale * Convert.ToDouble(line.Replace("LengthLensScreen:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("MaxAngleSource:")==0) { MaxAngleSource = ScaleAngle * Convert.ToDouble(line.Replace("MaxAngleSource:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("NStart:")==0) { NStart = Convert.ToDouble(line.Replace("NStart:", "").Replace('.', ',')); continue; }
+// Steps
+			if(line.IndexOf("AmountOfScattering:")==0) { AmountOfScattering = (int)Convert.ToDouble(line.Replace("AmountOfScattering:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("MaxAngleScatering:")==0) { MaxAngleScatering = ScaleAngle * Convert.ToDouble(line.Replace("MaxAngleScatering:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("Step:")==0) { Step = Convert.ToDouble(line.Replace("Step: ", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("AngleStep:")==0) { AngleStep = ScaleAngle * Convert.ToDouble(line.Replace("AngleStep:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("AngleRadStep:")==0) { AngleRadStep = ScaleAngle * Convert.ToDouble(line.Replace("AngleRadStep:", "").Replace('.', ',')); continue; }
+// Object
+			if(line.IndexOf("ObjectWidth:")==0) { ObjectWidth = scale * Convert.ToDouble(line.Replace("ObjectWidth:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("ObjectHeight:")==0) { ObjectHeight = scale * Convert.ToDouble(line.Replace("ObjectHeight:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("ObjectThikness:")==0) { ObjectThikness = scale * Convert.ToDouble(line.Replace("ObjectThikness:", "").Replace('.', ',')); continue; }
+// Count Of Threads
+			if(line.IndexOf("CountOfThreads:")==0) { CountOfThreads = (int)Convert.ToDouble(line.Replace("CountOfThreads:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("writePathOfFile:")==0) { writePathOfFile = line.Replace("writePathOfFile: ", ""); continue; }
+// Type Of Material
+			if(line.IndexOf("TypeMaterial: Ni")==0) { TypeMaterial = 1; continue; }
+			if(line.IndexOf("TypeMaterial: Au")==1) { TypeMaterial = 4; continue; }
+			if(line.IndexOf("TypeMaterial: Al")==2) { TypeMaterial = 5; continue; }
+		    }
+		file.Close();
+// Test
+		System.Console.WriteLine("Cell={0}", Cell);
+		System.Console.WriteLine("Wall={0}", Wall);
+		System.Console.WriteLine("thikness={0}", thikness);
+		System.Console.WriteLine("density={0}", density);
+		System.Console.WriteLine("WightToEdge={0}", WightToEdge);
+		System.Console.WriteLine("HeightToEdge={0}", HeightToEdge);
+		System.Console.WriteLine("LensWidth={0}", LensWidth);
+		System.Console.WriteLine("LensHeight={0}", LensHeight);
+		System.Console.WriteLine("ScreenX={0}", ScreenX);
+		System.Console.WriteLine("ScreenY={0}", ScreenY);
+		System.Console.WriteLine("WidthScreen={0}", WidthScreen);
+		System.Console.WriteLine("HeightScreen={0}", HeightScreen);
+		System.Console.WriteLine("WidthSource={0}", WidthSource);
+		System.Console.WriteLine("HeightSource={0}", HeightSource);
+		System.Console.WriteLine("StartEnergy={0}", StartEnergy);
+		System.Console.WriteLine("LengthSourceObject={0}", LengthSourceObject);
+		System.Console.WriteLine("LengthObjectLens={0}", LengthObjectLens);
+		System.Console.WriteLine("LengthLensScreen={0}", LengthLensScreen);
+		System.Console.WriteLine("MaxAngleSource={0}", MaxAngleSource);
+		System.Console.WriteLine("NStart={0}", NStart);
+		System.Console.WriteLine("AmountOfScattering={0}", AmountOfScattering);
+		System.Console.WriteLine("MaxAngleScatering={0}", MaxAngleScatering);
+		System.Console.WriteLine("Step={0}", Step);
+		System.Console.WriteLine("AngleStep={0}", AngleStep);
+		System.Console.WriteLine("AngleRadStep={0}", AngleRadStep);
+		System.Console.WriteLine("ObjectWidth={0}", ObjectWidth);
+		System.Console.WriteLine("ObjectHeight={0}", ObjectHeight);
+		System.Console.WriteLine("ObjectThikness={0}", ObjectThikness);
+		System.Console.WriteLine("CountOfThreads={0}", CountOfThreads);
+		System.Console.WriteLine("writePathOfFile={0}", writePathOfFile);
+		System.Console.WriteLine("TypeMaterial={0}", TypeMaterial);
+            }
+        }
+        catch (IOException e)
+        {
+            Console.WriteLine("The file could not be read:");
+            Console.WriteLine(e.Message);
+        }
 
-            Cell = Convert.ToDouble(ArrayTextBox[0].Text.Replace('.', ','));
-            Wall = Convert.ToDouble(ArrayTextBox[1].Text.Replace('.', ','));
-            thikness = Convert.ToDouble(ArrayTextBox[2].Text.Replace('.', ','));
-            density = Convert.ToDouble(ArrayTextBox[3].Text.Replace('.', ','));
-            WightToEdge = Convert.ToDouble(ArrayTextBox[4].Text.Replace('.', ','));
-            HeightToEdge = Convert.ToDouble(ArrayTextBox[5].Text.Replace('.', ','));
-            LensWidth = scale * Convert.ToDouble(ArrayTextBox[6].Text.Replace('.', ','));
-            LensHeight = scale * Convert.ToDouble(ArrayTextBox[7].Text.Replace('.', ','));
-
-            // Screen
-
-            ScreenX = (int)Convert.ToDouble(ArrayTextBox[8].Text.Replace('.', ','));
-            ScreenY = (int)Convert.ToDouble(ArrayTextBox[9].Text.Replace('.', ','));
-            WidthScreen = scale * Convert.ToDouble(ArrayTextBox[10].Text.Replace('.', ','));
-            HeightScreen = scale * Convert.ToDouble(ArrayTextBox[11].Text.Replace('.', ','));
-
-            // Settings
-
-            WidthSource = scale * Convert.ToDouble(ArrayTextBox[12].Text.Replace('.', ','));
-            HeightSource = scale * Convert.ToDouble(ArrayTextBox[13].Text.Replace('.', ','));
-            StartEnergy = Convert.ToDouble(ArrayTextBox[14].Text.Replace('.', ','));
-            LengthSourceObject = scale * Convert.ToDouble(ArrayTextBox[15].Text.Replace('.', ','));
-            LengthObjectLens = scale * Convert.ToDouble(ArrayTextBox[16].Text.Replace('.', ','));
-            LengthLensScreen = scale * Convert.ToDouble(ArrayTextBox[17].Text.Replace('.', ','));
-            MaxAngleSource = ScaleAngle * Convert.ToDouble(ArrayTextBox[18].Text.Replace('.', ','));
-            NStart = Convert.ToDouble(ArrayTextBox[19].Text.Replace('.', ','));
-
-            // Steps
-
-            AmountOfScattering = (int)Convert.ToDouble(ArrayTextBox[20].Text.Replace('.', ','));
-            MaxAngleScatering = ScaleAngle * Convert.ToDouble(ArrayTextBox[21].Text.Replace('.', ','));
-            Step = Convert.ToDouble(ArrayTextBox[22].Text.Replace('.', ','));
-            AngleStep = ScaleAngle * Convert.ToDouble(ArrayTextBox[23].Text.Replace('.', ','));
-            AngleRadStep = ScaleAngle * Convert.ToDouble(ArrayTextBox[24].Text.Replace('.', ','));
-
-            // Object
-
-            ObjectWidth = scale * Convert.ToDouble(ArrayTextBox[25].Text.Replace('.', ','));
-            ObjectHeight = scale * Convert.ToDouble(ArrayTextBox[26].Text.Replace('.', ','));
-            ObjectThikness = scale * Convert.ToDouble(ArrayTextBox[27].Text.Replace('.', ','));
-
-            // Count Of Threads
-            CountOfThreads = (int)Convert.ToDouble(ArrayTextBox[28].Text.Replace('.', ','));
-            writePathOfFile = (NameTextBox.Text);
+// *** end of Read Parameters ***
 
             SetPropertiesOfMaterial();
             PixelScale = WidthScreen / ScreenX;
@@ -707,7 +690,7 @@ namespace Lens
         void SetPropertiesOfMaterial()
         {
 
-            if (comboBoxMaterial.SelectedIndex == 0)
+            if (TypeMaterial == 0)
             {
                 PhotonInteractionCoefficients = PhotonInteractionCoefficientsNickel;
                 density = densityNickel;
@@ -715,7 +698,7 @@ namespace Lens
 
             }
 
-            if (comboBoxMaterial.SelectedIndex == 1)
+            if (TypeMaterial == 1)
             {
                 PhotonInteractionCoefficients = PhotonInteractionCoefficientsGold;
                 density = densityGold;
@@ -723,15 +706,14 @@ namespace Lens
 
             }
 
-            if (comboBoxMaterial.SelectedIndex == 2)
+            if (TypeMaterial == 2)
             {
                 PhotonInteractionCoefficients = PhotonInteractionCoefficientsAluminium;
                 density = densityAluminium;
                 m0 = m0Aluminium;
 
             }
-
-            ArrayTextBox[3].Text = density.ToString();
+            
         }
 
         // Задание массива экрана
@@ -744,31 +726,7 @@ namespace Lens
                     ArrayPointScreen[x, y] = 0;
 
         }
-
-        private void SolveButton_Click(object sender, EventArgs e)
-        {
-            CreateThreads(CountOfThreads);
-        }
-
-        // Создаём потоки
-        void CreateThreads(int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                ThreadAndProperties counter = new ThreadAndProperties(i, 0, 0, 1, 1, 0, Parameters);
-                Thread myThread = new Thread(new ThreadStart(counter.Launch));
-                myThreads.Insert(myThreads.Count, myThread);
-                myThread.Start();
-
-                ProgressTreads.Add(0);
-            }
-        }
-
-        private void ExitButton_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
-
+        
 
         // Расчёт через элементарную ячейку
 
@@ -779,9 +737,9 @@ namespace Lens
         public double Progress;
         public double StartZ;
 
-        private void SolveButtonOneThread_Click(object sender, EventArgs e)
+        void SolveOneThread()
         {
-            GetSettings();
+            //GetSettings();
 
             CreateArrayScreenOfOne();
 
@@ -828,6 +786,8 @@ namespace Lens
 
             for (x = X1; x <= X2; x++)
             {
+		Console.WriteLine("x: {0}", x); // ***
+
                 for (y = Y1; y <= Y2; y++)
                 {
                     double N0 = NStart;
@@ -966,9 +926,11 @@ namespace Lens
                 {
 
                     N -= GetReduceN(Energy, direction, N);
-
-                    ScaterringRayCompton(Position, Energy, heir, N, direction);
-                    ScaterringRayRayleigh(Position, Energy, heir, N, direction);
+                    if (heir < AmountOfScattering)
+                    {
+                        ScaterringRayCompton(Position, Energy, heir, N, direction);
+                        ScaterringRayRayleigh(Position, Energy, heir, N, direction);
+                    }
                     //Debug.Log(N);
                 }
                 Position += direction;
@@ -1002,7 +964,7 @@ namespace Lens
                 {
                     for (double f = 0; f <= Math.PI * 2; f += AngleRadStep)
                     {
-                        MoveScatteringRay(Position, CurrentEnergy, heir + 1, n / (AngleRadStep / Math.PI), new Vector3(direction.X * Math.Cos(f) - Math.Sin(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), direction.X * Math.Sin(f) + Math.Cos(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), Math.Sin(a) * direction.Y + Math.Cos(a) * direction.Z));
+                        MoveRay(Position, CurrentEnergy, heir + 1, n / (AngleRadStep / Math.PI), new Vector3(direction.X * Math.Cos(f) - Math.Sin(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), direction.X * Math.Sin(f) + Math.Cos(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), Math.Sin(a) * direction.Y + Math.Cos(a) * direction.Z));
                     }
                 }
             }
@@ -1083,7 +1045,7 @@ namespace Lens
                 {
                     for (double f = 0; f <= Math.PI * 2; f += AngleRadStep)
                     {
-                        MoveScatteringRay(Position, CurrentEnergy, heir + 1, n / (AngleRadStep / Math.PI), new Vector3(direction.X * Math.Cos(f) - Math.Sin(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), direction.X * Math.Sin(f) + Math.Cos(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), Math.Sin(a) * direction.Y + Math.Cos(a) * direction.Z));
+                        MoveRay(Position, CurrentEnergy, heir + 1, n / (AngleRadStep / Math.PI), new Vector3(direction.X * Math.Cos(f) - Math.Sin(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), direction.X * Math.Sin(f) + Math.Cos(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), Math.Sin(a) * direction.Y + Math.Cos(a) * direction.Z));
                     }
                 }
             }
@@ -1098,7 +1060,7 @@ namespace Lens
 
             for (double a = angle - AngleStep; a <= angle; a += AngleStep / 20)
             {
-                n += AngleStep / 20  * r0 * r0 / 2 * Math.Pow((1 / (1 + CurrentEnergy * (1 - Math.Cos(angle)))), 2) * (1 + Math.Cos(angle) * Math.Cos(angle) + (Math.Pow(CurrentEnergy, 2) * Math.Pow(1 - Math.Cos(angle), 2)) / (1 + CurrentEnergy * (1 - Math.Cos(angle))));
+                n += AngleStep / 20 * r0 * r0 / 2 * Math.Pow((1 / (1 + CurrentEnergy * (1 - Math.Cos(angle)))), 2) * (1 + Math.Cos(angle) * Math.Cos(angle) + (Math.Pow(CurrentEnergy, 2) * Math.Pow(1 - Math.Cos(angle), 2)) / (1 + CurrentEnergy * (1 - Math.Cos(angle))));
             }
 
             n = n * 2.37 * Math.Pow(10, 29);
@@ -1122,7 +1084,6 @@ namespace Lens
         double GetScatteringNRayleigh(double Energy)
         {
             double ScatteringN = 0;
-
 
             if (Energy < PhotonInteractionCoefficients[0, 0])
                 ScatteringN += PhotonInteractionCoefficients[4, 0];
@@ -1152,66 +1113,6 @@ namespace Lens
         }
 
 
-        void MoveScatteringRay(Vector3 Position, double Energy, int heir, double N, Vector3 direction)
-        {
-            //Console.WriteLine("Vx = " + direction.X.ToString());
-            //Console.WriteLine("Vy = " + direction.Y.ToString());
-            //Console.WriteLine("Vz = " + direction.Z.ToString());
-
-            if (Position.Z < LengthSourceObject)
-            {
-                Position += direction * ((LengthSourceObject - Position.Z) / direction.Z);
-            }
-
-            while (Position.Z >= LengthSourceObject && Position.Z < LengthSourceObject + ObjectThikness && Energy > 0)
-            {
-                if (InVoidBody(Position) == false)
-                {
-
-                    //N -= GetReduceN(Energy, direction, N);
-                    //Energy -= ReduceOfEnergy(Energy, direction);
-                    //if (heir < AmountOfScattering)
-                    //ScaterringRay(Position, Energy, heir, N, direction);
-                    //Debug.Log(N);
-
-                }
-                Position += direction;
-
-
-            }
-
-            if (Position.Z >= LengthSourceObject + ObjectThikness && Position.Z < LengthSourceObject + ObjectThikness + LengthObjectLens)
-            {
-                Position += direction * ((LengthSourceObject + LengthObjectLens + thikness - Position.Z) / direction.Z) + direction;
-            }
-
-
-            while (Position.Z >= LengthSourceObject + ObjectThikness + LengthObjectLens && Position.Z < LengthSourceObject + ObjectThikness + LengthObjectLens + thikness && Energy > 0)
-            {
-
-                //Console.WriteLine(" N = " + N);
-
-                if (InVoid(Position) == false)
-                {
-
-                    N -= GetReduceN(Energy, direction, N);
-                    //Debug.Log(N);
-                }
-                Position += direction;
-
-            }
-
-            if (Position.Z >= LengthSourceObject + ObjectThikness + LengthObjectLens + thikness && Position.Z < LengthSourceObject + ObjectThikness + LengthObjectLens + thikness + LengthLensScreen)
-            {
-                Position += direction * ((LengthSourceObject + thikness + LengthObjectLens + ObjectThikness + LengthLensScreen - Position.Z) / direction.Z) + direction;
-            }
-
-            if (Position.Z >= LengthSourceObject + thikness + LengthObjectLens + ObjectThikness + LengthLensScreen)
-                AddEnergyToArray(Position, Energy, N);
-
-
-        }
-
 
         // Уменьшение частиц основного луча
         double GetReduceN(double CurrentEnergy, Vector3 direction, double N)
@@ -1220,13 +1121,13 @@ namespace Lens
 
             n = (N * (1 - Math.Exp(-GetReducingN(CurrentEnergy) * direction.Length() * density / (scale_cm2mm * scale))));
 
-            //Console.WriteLine(" reduce N = " + N);
+            //Console.WriteLine(" old N = " + N);
             //Console.WriteLine(" CurrentEnergy = " + CurrentEnergy);
             //Console.WriteLine(" GetReducingN = " + GetReducingN(CurrentEnergy));
             //Console.WriteLine(" step = " + direction.Length());
             //Console.WriteLine(" reduce n = " + n);
             //Console.WriteLine("exp = " + Math.Exp(-GetReducingN(CurrentEnergy) * direction.Length() * density / (scale_cm2mm * scale)));
-            //Console.WriteLine(" reduce N = " + n);
+            //Console.WriteLine(" new N = " + (N - n));
             return n;
         }
 
@@ -1265,6 +1166,9 @@ namespace Lens
         void AddEnergyToArray(Vector3 Position, double Energy, double N)
         {
             int SX, SY = 0;
+
+            double Width = WidthScreen;
+            double Height = HeightScreen;
 
             if (Math.Abs(Position.X) < Width / 2 && Math.Abs(Position.X) < Height / 2)
             {
@@ -1366,7 +1270,6 @@ namespace Lens
         {
 
             double[,] ArrayPointScreen1Reflection = new double[ScreenX, ScreenY];
-            //double[,] ArrayPointScreen2Reflection = new double[ScreenX, ScreenY];
 
 
             for (int x = 0; x < ScreenX; x++)
@@ -1380,177 +1283,9 @@ namespace Lens
                     ArrayPointScreenOfOne[x, y] = ArrayPointScreen1Reflection[x, y] + ArrayPointScreen1Reflection[x, ScreenY - 1 - y];
 
             ArrayPointScreen1Reflection = null;
-
-            //LensWidth = 20;
-            //LensHeight = 20;
-            //PixelScale
-
-            /*
-            double[,] ArrayPoint = new double[ScreenX, ScreenY];
-
-            for (int x = 0; x < ScreenX; x++)
-                for (int y = 0; y < ScreenY; y++)
-                    ArrayPoint[x, y] = 0;
-
-
-            for (int xBox = (int)-LensWidth / 2 * scale; xBox <= LensWidth / 2 * scale; xBox = +(int)X2 * 2)
-                for (int yBox = (int)-LensHeight / 2 * scale; yBox <= LensHeight / 2 * scale; yBox = +(int)Y2 * 2)
-                {
-
-                    for (int x = 0; x < ScreenX; x++)
-                        for (int y = 0; y < ScreenY; y++)
-                        {
-                            if (x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 > 0 && x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 < ScreenX)
-                                if (y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 > 0 && y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 < ScreenY)
-                                    ArrayPoint[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointScreen2Reflection[x, y];
-                        }
-
-                }
-
-
-            for (int xBox = (int)-ObjectWidth / 2 * scale; xBox <= ObjectWidth / 2 * scale; xBox = +(int)X2 * 2)
-                for (int yBox = (int)-ObjectHeight / 2 * scale; yBox <= ObjectHeight / 2 * scale; yBox = +(int)Y2 * 2)
-                {
-
-                    for (int x = 0; x < ScreenX; x++)
-                        for (int y = 0; y < ScreenY; y++)
-                        {
-                            if (x + (int)((WidthScreen / 2 - ObjectWidth / 2 + xBox) / PixelScale) - ScreenX / 2 > 0 && x + (int)((WidthScreen / 2 - ObjectWidth / 2 + xBox) / PixelScale) - ScreenX / 2 < ScreenX)
-                                if (y + (int)((HeightScreen / 2 - ObjectHeight / 2 + yBox) / PixelScale) - ScreenY / 2 > 0 && y + (int)((HeightScreen / 2 - ObjectHeight / 2 + yBox) / PixelScale) - ScreenY / 2 < ScreenY)
-                                    ArrayPoint[x + (int)((WidthScreen / 2 - ObjectWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - ObjectHeight / 2 + yBox) / PixelScale) - ScreenY / 2] -= ArrayPointScreen2Reflection[x, y];
-                        }
-
-                }
-
-
-            for (int x = 0; x < ScreenX; x++)
-                for (int y = 0; y < ScreenY; y++)
-                    ArrayPointScreen[x, y] = ArrayPoint[x, y];*/
+            
 
             CopyArrayScreen();
-            //CalculateScreen();
-        }
-
-        void CalculateScreen()
-        {
-
-            double[,] ArrayPointX = new double[ScreenX, ScreenY];
-
-            for (int x = 0; x < ScreenX; x++)
-                for (int y = 0; y < ScreenY; y++)
-                    ArrayPointX[x, y] = 0;
-
-            Console.WriteLine("X2 = " + X2.ToString());
-            Console.WriteLine("Y2 = " + Y2.ToString());
-
-
-            int xBox = 0;
-            int yBox = 0;
-
-            for (xBox = (int)-LensWidth / 2 * scale; xBox <= LensWidth / 2 * scale; xBox = +(int)X2 * 2)
-            {
-
-                for (int x = 0; x < ScreenX; x++)
-                    for (int y = 0; y < ScreenY; y++)
-                    {
-                        if (x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 > 0 && x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 < ScreenX)
-                            if (y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 > 0 && y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 < ScreenY)
-                                ArrayPointX[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointScreenOfOne[x, y];
-                    }
-
-            }
-
-
-            for (yBox = (int)-LensHeight / 2 * scale; yBox <= -ObjectHeight / 2 * scale; yBox = +(int)Y2 * 2)
-            {
-                for (int x = 0; x < ScreenX; x++)
-                    for (int y = 0; y < ScreenY; y++)
-                        ArrayPointScreen[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointX[x, y];
-            }
-
-
-            for (yBox = (int)ObjectHeight / 2 * scale; yBox <= LensHeight / 2 * scale; yBox = +(int)Y2 * 2)
-            {
-                for (int x = 0; x < ScreenX; x++)
-                    for (int y = 0; y < ScreenY; y++)
-                        ArrayPointScreen[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointX[x, y];
-            }
-
-
-
-            ArrayPointX = null;
-
-            double[,] ArrayPointY = new double[ScreenX, ScreenY];
-
-            xBox = 0;
-            for (yBox = (int)-ObjectHeight / 2 * scale; yBox <= ObjectHeight / 2 * scale; yBox = +(int)Y2 * 2)
-            {
-
-                for (int x = 0; x < ScreenX; x++)
-                    for (int y = 0; y < ScreenY; y++)
-                    {
-                        if (x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 > 0 && x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 < ScreenX)
-                            if (y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 > 0 && y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 < ScreenY)
-                                ArrayPointY[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointScreenOfOne[x, y];
-                    }
-
-            }
-
-
-            for (xBox = (int)-LensWidth / 2 * scale; xBox <= -ObjectWidth / 2 * scale; xBox = +(int)X2 * 2)
-            {
-                for (int x = 0; x < ScreenX; x++)
-                    for (int y = 0; y < ScreenY; y++)
-                        ArrayPointScreen[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointY[x, y];
-            }
-
-
-            for (xBox = (int)ObjectWidth / 2 * scale; xBox <= LensWidth / 2 * scale; xBox = +(int)X2 * 2)
-            {
-                for (int x = 0; x < ScreenX; x++)
-                    for (int y = 0; y < ScreenY; y++)
-                        ArrayPointScreen[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointY[x, y];
-            }
-
-
-            //ObjectWidth
-
-            /*
-            for (int xBox = (int)-LensWidth / 2 * scale; xBox <= LensWidth / 2 * scale; xBox = +(int)X2 * 2)
-                for (int yBox = (int)-LensHeight / 2 * scale; yBox <= LensHeight / 2 * scale; yBox = +(int)Y2 * 2)
-                {
-
-                    for (int x = 0; x < ScreenX; x++)
-                        for (int y = 0; y < ScreenY; y++)
-                        {
-                            if (x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 > 0 && x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2 < ScreenX)
-                                if (y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 > 0 && y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2 < ScreenY)
-                                    ArrayPoint[x + (int)((WidthScreen / 2 - LensWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - LensHeight / 2 + yBox) / PixelScale) - ScreenY / 2] += ArrayPointScreenOfOne[x, y];
-                        }
-
-                }
-
-
-            for (int xBox = (int)-ObjectWidth / 2 * scale; xBox <= ObjectWidth / 2 * scale; xBox = +(int)X2 * 2)
-                for (int yBox = (int)-ObjectHeight / 2 * scale; yBox <= ObjectHeight / 2 * scale; yBox = +(int)Y2 * 2)
-                {
-
-                    for (int x = 0; x < ScreenX; x++)
-                        for (int y = 0; y < ScreenY; y++)
-                        {
-                            if (x + (int)((WidthScreen / 2 - ObjectWidth / 2 + xBox) / PixelScale) - ScreenX / 2 > 0 && x + (int)((WidthScreen / 2 - ObjectWidth / 2 + xBox) / PixelScale) - ScreenX / 2 < ScreenX)
-                                if (y + (int)((HeightScreen / 2 - ObjectHeight / 2 + yBox) / PixelScale) - ScreenY / 2 > 0 && y + (int)((HeightScreen / 2 - ObjectHeight / 2 + yBox) / PixelScale) - ScreenY / 2 < ScreenY)
-                                    ArrayPoint[x + (int)((WidthScreen / 2 - ObjectWidth / 2 + xBox) / PixelScale) - ScreenX / 2, y + (int)((HeightScreen / 2 - ObjectHeight / 2 + yBox) / PixelScale) - ScreenY / 2] -= ArrayPointScreenOfOne[x, y];
-                        }
-
-                }
-
-
-            for (int x = 0; x < ScreenX; x++)
-                for (int y = 0; y < ScreenY; y++)
-                    ArrayPointScreen[x, y] = ArrayPoint[x, y];*/
-
-
         }
 
         void CopyArrayScreen()
@@ -1564,7 +1299,7 @@ namespace Lens
 
             //Console.WriteLine("X2 = " + X2.ToString());
             //Console.WriteLine("Y2 = " + Y2.ToString());
-            
+
 
             int xBox = 0;
             int yBox = 0;
@@ -1584,7 +1319,7 @@ namespace Lens
 
                         if (Xn > 0 && Xn < ScreenX)
                             if (Yn > 0 && Yn < ScreenY)
-                                ArrayPointX[Xn , Yn] += ArrayPointScreenOfOne[x, y];
+                                ArrayPointX[Xn, Yn] += ArrayPointScreenOfOne[x, y];
                     }
 
             }
@@ -1620,7 +1355,7 @@ namespace Lens
                                 ArrayPointScreen[Xn, Yn] += ArrayPointX[x, y];
                     }
             }
-            
+
 
 
             ArrayPointX = null;
@@ -1659,7 +1394,7 @@ namespace Lens
                                 ArrayPointScreen[Xn, Yn] += ArrayPointY[x, y];
                     }
             }
-            
+
 
             for (xBox = (int)ObjectWidth / 2; xBox < LensWidth / 2; xBox += (int)X2 * 2)
             {
@@ -1676,18 +1411,13 @@ namespace Lens
                     }
             }
 
-            
+
         }
 
 
 
         // Вывод результатов
-
-        private void buttonSaveScreen_Click(object sender, EventArgs e)
-        {
-            WriteResultFromOneThread();
-        }
-
+        
         void WriteResultFromOneThread()
         {
             double Xp = 0;
@@ -1751,13 +1481,9 @@ namespace Lens
 
                 }
             }
-            
-        }
 
-        private void buttonSaveGradient_Click(object sender, EventArgs e)
-        {
-            WriteGradientFromOneThread();
         }
+        
 
         void WriteGradientFromOneThread()
         {
@@ -1768,14 +1494,14 @@ namespace Lens
             string Path = writePathOfFolder + writePathOfFile + "Gradient" + writeOfExtension;
 
             string TextLine = "размер экрана " + ScreenX.ToString() + " x " + ScreenY.ToString();
-            
+
             try
             {
                 using (StreamWriter sw = new StreamWriter(Path, false, System.Text.Encoding.Default))
                 {
                     sw.WriteLine(TextLine + "\n");
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -1819,412 +1545,10 @@ namespace Lens
                 }
 
             }
-            
-            
-        }
-
-
-    }
-}
-
-public class ThreadAndProperties
-{
-
-    public int CountOfTread;
-    public double X1;
-    public double Y1;
-    public double X2;
-    public double Y2;
-    public double Progress;
-
-    public double[] Parameters;
-
-    // Lens
-
-    double Cell = 10;
-    double Wall = 10;
-    double thikness = 100;
-    double density = 10;
-    double WightToEdge = 20;
-    double HeightToEdge = 20;
-    double LensWidth = 100;
-    double LensHeight = 100;
-
-    // Screen
-
-    int ScreenX = 10000;
-    int ScreenY = 10000;
-    double WidthScreen = 100;
-    double HeightScreen = 100;
-
-    // Settings
-
-    double WidthSource = 10;
-    double HeightSource = 10;
-    double StartEnergy = 60;
-    double LengthSourceLens = 100;
-    double LengthLensObject = 0;
-    double LengthObjectScreen = 1000;
-    double MaxAngleSource = Math.PI / 180 * 2;
-    double N = 1000000;
-
-    // Steps
-
-    int AmountOfScattering = 2;
-    double MaxAngleScatering = Math.PI / 180 * 2;
-    double Step = 5;
-    double AngleStep = Math.PI / 180;
-    double AngleRadStep = Math.PI / 18;
-
-    // Object
-
-    double ObjectWidth = 0;
-    double ObjectHeight = 0;
-    double ObjectThikness = 0;
-
-    // Для расчёта
-
-    public double[,] ArrayPointScreen;
-    double R;
-
-    int Width = 0;
-    int Height = 0;
-
-    int CountOfTable = 30;
-    Vector2[] ReducingMount;
-
-
-    public ThreadAndProperties(int countOfTread, double x1, double y1, double x2, double y2, double progress, double[] p)
-    {
-        this.CountOfTread = countOfTread;
-        this.X1 = x1;
-        this.Y1 = y1;
-        this.X2 = x2;
-        this.Y2 = y2;
-        this.Progress = progress;
-        this.Parameters = p;
-
-        Initialiase();
-        Launch();
-    }
-
-    public void Initialiase()
-    {
-        // Lens
-
-        Cell = Parameters[0];
-        Wall = Parameters[1];
-        thikness = Parameters[2];
-        density = Parameters[3];
-        WightToEdge = Parameters[4];
-        HeightToEdge = Parameters[5];
-        LensWidth = Parameters[6];
-        LensHeight = Parameters[7];
-
-        // Screen
-
-        WidthScreen = Parameters[8];
-        HeightScreen = Parameters[9];
-        ScreenX = (int)Parameters[10];
-        ScreenY = (int)Parameters[11];
-
-        // Settings
-
-        WidthSource = Parameters[12];
-        HeightSource = Parameters[13];
-        StartEnergy = Parameters[14];
-        LengthSourceLens = Parameters[15];
-        LengthLensObject = Parameters[16];
-        LengthObjectScreen = Parameters[17];
-        MaxAngleSource = Parameters[18];
-        N = Parameters[19];
-
-        // Steps
-
-        AmountOfScattering = (int)Parameters[20];
-        MaxAngleScatering = Parameters[21];
-        Step = Parameters[22];
-        AngleStep = Parameters[23];
-        AngleRadStep = Parameters[24];
-
-        // Object
-
-        ObjectWidth = Parameters[25];
-        ObjectHeight = Parameters[26];
-        ObjectThikness = Parameters[27];
-
-        R = 2 / Math.Sqrt(3) * Cell;
-        Width = 1;
-        Height = 1;
-
-        ReducingMount = new Vector2[CountOfTable];
-        SetTable(CountOfTable, ReducingMount);
-
-
-
-        CreateArrayScreen();
-    }
-
-
-    // Запись таблиц уменьшения
-    void SetTable(int Length, Vector2[] Table)
-    {
-        double a = 0;
-        double b = 0;
-
-        for (int i = 0; i < Table.Length; i++)
-        {
-            a = 0.425f * Math.Exp(0.258f * i);
-            b = 2074 * Math.Pow(i, -1.4f);
-            Table[i] = new Vector2(a, b);
-
-        }
-
-    }
-
-    // Задание массива экрана
-    void CreateArrayScreen()
-    {
-        ArrayPointScreen = new double[ScreenX, ScreenY];
-
-        for (int x = 0; x < ScreenX; x++)
-            for (int y = 0; y < ScreenY; y++)
-                ArrayPointScreen[x, y] = 0;
-
-    }
-
-    // поток пускает лучи из источника
-    public void Launch()
-    {
-        int rays = 0;
-        for (double i = X1; i <= X2; i++)
-        {
-            for (double t = Y1; t <= Y2; t++)
-            {
-                int N0 = (int)N;
-                if (i == X1 || i == X2)
-                    N0 = N0 / 2;
-                if (t == Y1 || t == Y2)
-                    N0 = N0 / 2;
-
-                MoveRay(new Vector3(i, t, 0), StartEnergy, 0, N, new Vector3(0, 0, Step));
-                rays++;
-
-
-                for (double a = 0; a <= MaxAngleSource; a += AngleStep)
-                {
-                    for (double f = 0; f <= Math.PI * 2; f += AngleRadStep)
-                    {
-                        MoveRay(new Vector3(i, t, 0), StartEnergy, 0, ReturnStartN(a, AngleRadStep), new Vector3(Math.Sin(a) * Math.Sin(f) * Step, -Math.Sin(a) * Math.Cos(f) * Step, Math.Cos(a) * Step));
-                    }
-                }
-
-
-            }
-        }
-    }
-
-    //
-    // Функционал для расчётов
-    //
-
-    // Возвращает величину начального пучка под углом
-    double ReturnStartN(double Angle, double RadAngle)
-    {
-
-        return N * Math.Cos(Angle) * (RadAngle / Math.PI);
-    }
-
-    // Возвращает данные о местонахождении луча (в материале или нет) в линзе
-    bool InVoid(Vector3 Position)
-    {
-        double x = Math.Abs(Position.X) % (3 * R + Math.Sqrt(3) * Wall);
-        double y = Math.Abs(Position.Y) % (2 * Cell + Wall);
-
-        x = Math.Abs(x) - (3 * R + Math.Sqrt(3) * Wall) / 2;
-        y = Math.Abs(y) - (2 * Cell + Wall) / 2;
-
-        x = Math.Abs(x);
-        y = Math.Abs(y);
-
-        if (Position.Z >= LengthSourceLens && Position.Z <= LengthSourceLens + thikness)
-        {
-            if (Math.Abs(Position.X) <= LensWidth / 2 && Math.Abs(Position.Y) <= LensHeight / 2)
-            {
-                if (x <= R / 2 && y <= Cell)
-                    return true;
-                if (x >= R / 2 && x <= R && y <= -Math.Sqrt(3) * x + 2 * Cell)
-                    return true;
-                if (x >= R / 2 + Math.Sqrt(3) / 2 * Wall && x <= R + Math.Sqrt(3) / 2 * Wall && y >= -Math.Sqrt(3) * x + 2 * Cell + 2 * Wall)
-                    return true;
-                if (x >= R + Math.Sqrt(3) / 2 * Wall && y >= Wall / 2)
-                    return true;
-                else
-                    return false;
-            }
-            else
-                return false;
-        }
-        else
-            return false;
-    }
-
-    // Возвращает данные о местонахождении луча (в материале или нет) в теле
-    bool InVoidBody(Vector3 Position)
-    {
-
-        return false;
-    }
-
-    // Максимум массива
-    double Maximum(double[] Array)
-    {
-        double max = Array[0];
-
-        for (int i = 0; i < Array.Length; i++)
-        {
-            if (max < Array[i])
-                max = Array[i];
-        }
-
-        return max;
-    }
-
-    // Перемещение луча
-    void MoveRay(Vector3 Position, double Energy, int heir, double N, Vector3 direction)
-    {
-        if (Position.Z < LengthSourceLens)
-        {
-            Position += direction * ((LengthSourceLens - Position.Z) / direction.Z);
-        }
-
-        while (Position.Z >= LengthSourceLens && Position.Z < LengthSourceLens + thikness && Energy > 0)
-        {
-            if (InVoid(Position) == true)
-            {
-                N -= GetReduceN(Energy, direction, N);
-                //Energy -= ReduceOfEnergy(Energy, direction);
-                if (heir < AmountOfScattering)
-                    ScaterringRay(Position, Energy, heir, N, direction);
-                //Debug.Log(N);
-            }
-            Position += direction;
 
 
         }
 
-        if (Position.Z >= LengthSourceLens + thikness && Position.Z < LengthSourceLens + thikness + LengthLensObject)
-        {
-            Position += direction * ((LengthSourceLens + LengthLensObject + thikness - Position.Z) / direction.Z) + direction;
-        }
-
-        while (Position.Z >= LengthSourceLens + thikness + LengthLensObject && Position.Z < LengthSourceLens + thikness + LengthLensObject + ObjectThikness && Energy > 0)
-        {
-            if (InVoidBody(Position) == true)
-            {
-                N -= GetReduceN(Energy, direction, N);
-                //Energy -= ReduceOfEnergy(Energy, direction);
-                if (heir < AmountOfScattering)
-                    ScaterringRay(Position, Energy, heir, N, direction);
-                //Debug.Log(N);
-            }
-            Position += direction;
-
-
-        }
-
-        if (Position.Z >= LengthSourceLens + thikness + LengthLensObject + ObjectThikness && Position.Z < LengthSourceLens + thikness + LengthLensObject + ObjectThikness + LengthObjectScreen)
-        {
-            Position += direction * ((LengthSourceLens + thikness + LengthLensObject + ObjectThikness + LengthObjectScreen - Position.Z) / direction.Z) + direction;
-        }
-
-        if (Position.Z >= LengthSourceLens + thikness + LengthLensObject + ObjectThikness + LengthObjectScreen)
-            AddEnergyToArray(Position, Energy, N);
-
-    }
-
-    // Запуск рассеянного луча
-    void ScaterringRay(Vector3 Position, double CurrentEnergy, int heir, double N, Vector3 direction)
-    {
-        for (double a = AngleStep; a <= MaxAngleScatering; a += AngleStep)
-        {
-            int n = ScatteringN(CurrentEnergy, a, N, direction);
-            if (n > 0)
-            {
-                for (double f = 0; f <= Math.PI * 2; f += AngleRadStep)
-                {
-                    MoveRay(Position, CurrentEnergy, heir + 1, n, new Vector3(direction.X * Math.Cos(f) - Math.Sin(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), direction.X * Math.Sin(f) + Math.Cos(f) * (Math.Cos(a) * direction.Y - Math.Sin(a) * direction.Z), Math.Sin(a) * direction.Y + Math.Cos(a) * direction.Z));
-                }
-            }
-        }
-    }
-
-    // Частиц рассеянного луча
-    int ScatteringN(double CurrentEnergy, double angle, double N, Vector3 direction)
-    {
-        double k = (((Math.Sin(angle) - Math.Sin(angle - AngleStep) + AngleStep)) / 2 * GetReduceN(CurrentEnergy, direction, N) / 2 * (AngleRadStep / Math.PI * 2));
-        return (int)(k);
-    }
-
-    // Уменьшение частиц основного луча
-    int GetReduceN(double CurrentEnergy, Vector3 direction, double N)
-    {
-        return (int)(Math.Exp(GetReducingN(CurrentEnergy, ReducingMount) * direction.Length() * density));
-    }
-
-    // Расчёт уменьшения по таблице 
-    double GetReducingN(double x, Vector2[] Table)
-    {
-        double Reducing = 0;
-
-        if (x < Table[0].X)
-            return x;
-        else
-        {
-            if (x > Table[Table.Length - 1].X)
-            {
-                int i = Table.Length - 1;
-                Reducing = Table[i].Y - (Table[i].X - x) * (Table[i].Y - Table[i - 1].Y) / (Table[i].X - Table[i - 1].X);
-                return 0;
-            }
-            else
-            {
-                int i = 1;
-
-                while (x > Table[i].X && i < Table.Length)
-                {
-                    i++;
-                }
-
-                Reducing = Table[i].Y - (Table[i].X - x) * (Table[i].Y - Table[i - 1].Y) / (Table[i].X - Table[i - 1].X);
-
-                return Reducing;
-            }
-        }
-    }
-
-    // Добавление энергии в ячейку экрана
-    void AddEnergyToArray(Vector3 Position, double Energy, double N)
-    {
-        int SX, SY = 0;
-
-        if (Math.Abs(Position.X) < Width / 2 && Math.Abs(Position.X) < Height / 2)
-        {
-            if (Position.X <= 0)
-                SX = (int)((-Width / 2 - Position.X) * (ScreenX / Width) + ScreenX / 2);
-            else
-                SX = (int)(Position.X / (Width) * ScreenX + ScreenX / 2);
-
-            if (Position.Y <= 0)
-                SY = (int)((-Height / 2 - Position.Y) * ScreenY / Height + ScreenY / 2);
-            else
-                SY = (int)(Position.Y / (Height) * ScreenY + ScreenY / 2);
-
-            if (ArrayPointScreen[SX, SY] == null || ArrayPointScreen[SX, SY] == 0)
-                ArrayPointScreen[SX, SY] = Energy * N;
-            ArrayPointScreen[SX, SY] += Energy * N;
-            //Console.WriteLine(ArrayPointScreen[SX, SY]);
-        }
 
     }
 }

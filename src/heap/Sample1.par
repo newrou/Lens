@@ -1,0 +1,41 @@
+// Lens
+Cell: 
+Wall:
+thikness:
+density:
+WightToEdge:
+HeightToEdge:
+LensWidth:
+LensHeight:
+
+// Screen
+ScreenX:
+ScreenY:
+WidthScreen:
+HeightScreen:
+
+// Settings
+WidthSource:
+HeightSource:
+StartEnergy:
+LengthSourceObject:
+LengthObjectLens:
+LengthLensScreen:
+MaxAngleSource:
+NStart:
+
+// Steps
+AmountOfScattering:
+MaxAngleScatering:
+Step:
+AngleStep:
+AngleRadStep:
+
+// Object
+ObjectWidth:
+ObjectHeight:
+ObjectThikness:
+
+// Count Of Threads
+CountOfThreads:
+writePathOfFile: Lens.out

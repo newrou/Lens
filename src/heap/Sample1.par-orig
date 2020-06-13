@@ -1,0 +1,42 @@
+// Lens
+Cell = Convert.ToDouble(ArrayTextBox[0].Text.Replace('.', ','));
+Wall = Convert.ToDouble(ArrayTextBox[1].Text.Replace('.', ','));
+thikness = Convert.ToDouble(ArrayTextBox[2].Text.Replace('.', ','));
+density = Convert.ToDouble(ArrayTextBox[3].Text.Replace('.', ','));
+WightToEdge = Convert.ToDouble(ArrayTextBox[4].Text.Replace('.', ','));
+HeightToEdge = Convert.ToDouble(ArrayTextBox[5].Text.Replace('.', ','));
+LensWidth = scale * Convert.ToDouble(ArrayTextBox[6].Text.Replace('.', ','));
+LensHeight = scale * Convert.ToDouble(ArrayTextBox[7].Text.Replace('.', ','));
+
+// Screen
+ScreenX = (int)Convert.ToDouble(ArrayTextBox[8].Text.Replace('.', ','));
+ScreenY = (int)Convert.ToDouble(ArrayTextBox[9].Text.Replace('.', ','));
+WidthScreen = scale * Convert.ToDouble(ArrayTextBox[10].Text.Replace('.', ','));
+HeightScreen = scale * Convert.ToDouble(ArrayTextBox[11].Text.Replace('.', ','));
+
+// Settings
+WidthSource = scale * Convert.ToDouble(ArrayTextBox[12].Text.Replace('.', ','));
+HeightSource = scale * Convert.ToDouble(ArrayTextBox[13].Text.Replace('.', ','));
+StartEnergy = Convert.ToDouble(ArrayTextBox[14].Text.Replace('.', ','));
+LengthSourceObject = scale * Convert.ToDouble(ArrayTextBox[15].Text.Replace('.', ','));
+LengthObjectLens = scale * Convert.ToDouble(ArrayTextBox[16].Text.Replace('.', ','));
+LengthLensScreen = scale * Convert.ToDouble(ArrayTextBox[17].Text.Replace('.', ','));
+MaxAngleSource = ScaleAngle * Convert.ToDouble(ArrayTextBox[18].Text.Replace('.', ','));
+NStart = Convert.ToDouble(ArrayTextBox[19].Text.Replace('.', ','));
+
+// Steps
+
+AmountOfScattering = (int)Convert.ToDouble(ArrayTextBox[20].Text.Replace('.', ','));
+MaxAngleScatering = ScaleAngle * Convert.ToDouble(ArrayTextBox[21].Text.Replace('.', ','));
+Step = Convert.ToDouble(ArrayTextBox[22].Text.Replace('.', ','));
+AngleStep = ScaleAngle * Convert.ToDouble(ArrayTextBox[23].Text.Replace('.', ','));
+AngleRadStep = ScaleAngle * Convert.ToDouble(ArrayTextBox[24].Text.Replace('.', ','));
+
+// Object
+ObjectWidth = scale * Convert.ToDouble(ArrayTextBox[25].Text.Replace('.', ','));
+ObjectHeight = scale * Convert.ToDouble(ArrayTextBox[26].Text.Replace('.', ','));
+ObjectThikness = scale * Convert.ToDouble(ArrayTextBox[27].Text.Replace('.', ','));
+
+// Count Of Threads
+CountOfThreads = (int)Convert.ToDouble(ArrayTextBox[28].Text.Replace('.', ','));
+writePathOfFile = (NameTextBox.Text);

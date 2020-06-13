@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+//using System.Data;
+//using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+//using System.Windows.Forms;
 using System.Collections;
 using System.IO;
 
@@ -107,9 +107,11 @@ public struct Vector3
     }
 }
 
-namespace Lens
+//namespace Lens
+class Lens
 {
-    public partial class Form1 : Form
+//    public partial class Form1 : Form
+    public static void Main(string[] args)
     {
         // Масштаб в программе 1 юнит = 1 мкм
         int scale = 1000;
@@ -192,6 +194,8 @@ namespace Lens
         double ObjectHeight = 10; // mm
         double ObjectThikness = 10; // mm
 
+	int TypeMaterial = 0;
+
         // Нужные переменные
 
         // Solve settings
@@ -221,8 +225,8 @@ namespace Lens
             10, 10, 10,
             1 };
 
-        Label[] LabelBox;
-        TextBox[] ArrayTextBox;
+//        Label[] LabelBox;
+//        TextBox[] ArrayTextBox;
 
         // Переменные для расчётов
         public double[,] ArrayPointScreen;
@@ -645,56 +649,105 @@ namespace Lens
         // Получение настроек для расчётов
         void GetSettings()
         {
-            for (int i = 0; i < ArrayTextBox.Length; i++)
-                Parameters[i] = Convert.ToDouble(ArrayTextBox[i].Text.Replace('.', ','));
 
+// *** Begin of Read Parameters
+	FileName=args[0];
+        Console.WriteLine("Parameter file: {0}", FileName);
 
-            // Lens
+        try
+        {
+            using (StreamReader file = new StreamReader(FileName))
+            {
+		while((line = file.ReadLine()) != null)
+		    {
+//			System.Console.WriteLine(line);
+			// Lens
+			if(line.IndexOf("Cell:")==0) { Cell = Convert.ToDouble(line.Replace("Cell:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("Wall:")==0) { Wall = Convert.ToDouble(line.Replace("Wall:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("thikness:")==0) { thikness = Convert.ToDouble(line.Replace("thikness:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("density:")==0) { density = Convert.ToDouble(line.Replace("density:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("WightToEdge:")==0) { WightToEdge = Convert.ToDouble(line.Replace("WightToEdge:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("HeightToEdge:")==0) { HeightToEdge = Convert.ToDouble(line.Replace("HeightToEdge:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LensWidth:")==0) { LensWidth = scale * Convert.ToDouble(line.Replace("LensWidth:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LensHeight:")==0) { LensHeight = scale * Convert.ToDouble(line.Replace("LensHeight:", "").Replace('.', ',')); continue; }
+// Screen
+			if(line.IndexOf("ScreenX:")==0) { ScreenX = (int)Convert.ToDouble(line.Replace("ScreenX:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("ScreenY:")==0) { ScreenY = (int)Convert.ToDouble(line.Replace("ScreenY:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("WidthScreen:")==0) { WidthScreen = scale * Convert.ToDouble(line.Replace("WidthScreen:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("HeightScreen:")==0) { HeightScreen = scale * Convert.ToDouble(line.Replace("HeightScreen:", "").Replace('.', ',')); continue; }
+// Settings
+			if(line.IndexOf("WidthSource:")==0) { WidthSource = scale * Convert.ToDouble(line.Replace("WidthSource:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("HeightSource:")==0) { HeightSource = scale * Convert.ToDouble(line.Replace("HeightSource:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("StartEnergy:")==0) { StartEnergy = Convert.ToDouble(line.Replace("StartEnergy:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LengthSourceObject:")==0) { LengthSourceObject = scale * Convert.ToDouble(line.Replace("LengthSourceObject:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LengthObjectLens:")==0) { LengthObjectLens = scale * Convert.ToDouble(line.Replace("LengthObjectLens:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("LengthLensScreen:")==0) { LengthLensScreen = scale * Convert.ToDouble(line.Replace("LengthLensScreen:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("MaxAngleSource:")==0) { MaxAngleSource = ScaleAngle * Convert.ToDouble(line.Replace("MaxAngleSource:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("NStart:")==0) { NStart = Convert.ToDouble(line.Replace("NStart:", "").Replace('.', ',')); continue; }
+// Steps
+			if(line.IndexOf("AmountOfScattering:")==0) { AmountOfScattering = (int)Convert.ToDouble(line.Replace("AmountOfScattering:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("MaxAngleScatering:")==0) { MaxAngleScatering = ScaleAngle * Convert.ToDouble(line.Replace("MaxAngleScatering:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("Step:")==0) { Step = Convert.ToDouble(line.Replace("Step: ", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("AngleStep:")==0) { AngleStep = ScaleAngle * Convert.ToDouble(line.Replace("AngleStep:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("AngleRadStep:")==0) { AngleRadStep = ScaleAngle * Convert.ToDouble(line.Replace("AngleRadStep:", "").Replace('.', ',')); continue; }
+// Object
+			if(line.IndexOf("ObjectWidth:")==0) { ObjectWidth = scale * Convert.ToDouble(line.Replace("ObjectWidth:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("ObjectHeight:")==0) { ObjectHeight = scale * Convert.ToDouble(line.Replace("ObjectHeight:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("ObjectThikness:")==0) { ObjectThikness = scale * Convert.ToDouble(line.Replace("ObjectThikness:", "").Replace('.', ',')); continue; }
+// Count Of Threads
+			if(line.IndexOf("CountOfThreads:")==0) { CountOfThreads = (int)Convert.ToDouble(line.Replace("CountOfThreads:", "").Replace('.', ',')); continue; }
+			if(line.IndexOf("writePathOfFile:")==0) { writePathOfFile = line.Replace("writePathOfFile: ", ""); continue; }
+// Type Of Material
+			if(line.IndexOf("TypeMaterial: Ni")==0) { TypeMaterial = 1; continue; }
+			if(line.IndexOf("TypeMaterial: Au")==1) { TypeMaterial = 4; continue; }
+			if(line.IndexOf("TypeMaterial: Al")==2) { TypeMaterial = 5; continue; }
 
-            Cell = Convert.ToDouble(ArrayTextBox[0].Text.Replace('.', ','));
-            Wall = Convert.ToDouble(ArrayTextBox[1].Text.Replace('.', ','));
-            thikness = Convert.ToDouble(ArrayTextBox[2].Text.Replace('.', ','));
-            density = Convert.ToDouble(ArrayTextBox[3].Text.Replace('.', ','));
-            WightToEdge = Convert.ToDouble(ArrayTextBox[4].Text.Replace('.', ','));
-            HeightToEdge = Convert.ToDouble(ArrayTextBox[5].Text.Replace('.', ','));
-            LensWidth = scale * Convert.ToDouble(ArrayTextBox[6].Text.Replace('.', ','));
-            LensHeight = scale * Convert.ToDouble(ArrayTextBox[7].Text.Replace('.', ','));
+			counter++;
+		    }
+		file.Close();
+// Test
+		System.Console.WriteLine("There were {0} lines.", counter);
 
-            // Screen
+		System.Console.WriteLine("Cell={0}", Cell);
+		System.Console.WriteLine("Wall={0}", Wall);
+		System.Console.WriteLine("thikness={0}", thikness);
+		System.Console.WriteLine("density={0}", density);
+		System.Console.WriteLine("WightToEdge={0}", WightToEdge);
+		System.Console.WriteLine("HeightToEdge={0}", HeightToEdge);
+		System.Console.WriteLine("LensWidth={0}", LensWidth);
+		System.Console.WriteLine("LensHeight={0}", LensHeight);
+		System.Console.WriteLine("ScreenX={0}", ScreenX);
+		System.Console.WriteLine("ScreenY={0}", ScreenY);
+		System.Console.WriteLine("WidthScreen={0}", WidthScreen);
+		System.Console.WriteLine("HeightScreen={0}", HeightScreen);
+		System.Console.WriteLine("WidthSource={0}", WidthSource);
+		System.Console.WriteLine("HeightSource={0}", HeightSource);
+		System.Console.WriteLine("StartEnergy={0}", StartEnergy);
+		System.Console.WriteLine("LengthSourceObject={0}", LengthSourceObject);
+		System.Console.WriteLine("LengthObjectLens={0}", LengthObjectLens);
+		System.Console.WriteLine("LengthLensScreen={0}", LengthLensScreen);
+		System.Console.WriteLine("MaxAngleSource={0}", MaxAngleSource);
+		System.Console.WriteLine("NStart={0}", NStart);
+		System.Console.WriteLine("AmountOfScattering={0}", AmountOfScattering);
+		System.Console.WriteLine("MaxAngleScatering={0}", MaxAngleScatering);
+		System.Console.WriteLine("Step={0}", Step);
+		System.Console.WriteLine("AngleStep={0}", AngleStep);
+		System.Console.WriteLine("AngleRadStep={0}", AngleRadStep);
+		System.Console.WriteLine("ObjectWidth={0}", ObjectWidth);
+		System.Console.WriteLine("ObjectHeight={0}", ObjectHeight);
+		System.Console.WriteLine("ObjectThikness={0}", ObjectThikness);
+		System.Console.WriteLine("CountOfThreads={0}", CountOfThreads);
+		System.Console.WriteLine("writePathOfFile={0}", writePathOfFile);
+		System.Console.WriteLine("TypeMaterial={0}", TypeMaterial);
+            }
+        }
+        catch (IOException e)
+        {
+            Console.WriteLine("The file could not be read:");
+            Console.WriteLine(e.Message);
+        }
 
-            ScreenX = (int)Convert.ToDouble(ArrayTextBox[8].Text.Replace('.', ','));
-            ScreenY = (int)Convert.ToDouble(ArrayTextBox[9].Text.Replace('.', ','));
-            WidthScreen = scale * Convert.ToDouble(ArrayTextBox[10].Text.Replace('.', ','));
-            HeightScreen = scale * Convert.ToDouble(ArrayTextBox[11].Text.Replace('.', ','));
-
-            // Settings
-
-            WidthSource = scale * Convert.ToDouble(ArrayTextBox[12].Text.Replace('.', ','));
-            HeightSource = scale * Convert.ToDouble(ArrayTextBox[13].Text.Replace('.', ','));
-            StartEnergy = Convert.ToDouble(ArrayTextBox[14].Text.Replace('.', ','));
-            LengthSourceObject = scale * Convert.ToDouble(ArrayTextBox[15].Text.Replace('.', ','));
-            LengthObjectLens = scale * Convert.ToDouble(ArrayTextBox[16].Text.Replace('.', ','));
-            LengthLensScreen = scale * Convert.ToDouble(ArrayTextBox[17].Text.Replace('.', ','));
-            MaxAngleSource = ScaleAngle * Convert.ToDouble(ArrayTextBox[18].Text.Replace('.', ','));
-            NStart = Convert.ToDouble(ArrayTextBox[19].Text.Replace('.', ','));
-
-            // Steps
-
-            AmountOfScattering = (int)Convert.ToDouble(ArrayTextBox[20].Text.Replace('.', ','));
-            MaxAngleScatering = ScaleAngle * Convert.ToDouble(ArrayTextBox[21].Text.Replace('.', ','));
-            Step = Convert.ToDouble(ArrayTextBox[22].Text.Replace('.', ','));
-            AngleStep = ScaleAngle * Convert.ToDouble(ArrayTextBox[23].Text.Replace('.', ','));
-            AngleRadStep = ScaleAngle * Convert.ToDouble(ArrayTextBox[24].Text.Replace('.', ','));
-
-            // Object
-
-            ObjectWidth = scale * Convert.ToDouble(ArrayTextBox[25].Text.Replace('.', ','));
-            ObjectHeight = scale * Convert.ToDouble(ArrayTextBox[26].Text.Replace('.', ','));
-            ObjectThikness = scale * Convert.ToDouble(ArrayTextBox[27].Text.Replace('.', ','));
-
-            // Count Of Threads
-            CountOfThreads = (int)Convert.ToDouble(ArrayTextBox[28].Text.Replace('.', ','));
-            writePathOfFile = (NameTextBox.Text);
+// *** end of Read Parameters ***
 
             SetPropertiesOfMaterial();
             PixelScale = WidthScreen / ScreenX;
@@ -707,7 +760,8 @@ namespace Lens
         void SetPropertiesOfMaterial()
         {
 
-            if (comboBoxMaterial.SelectedIndex == 0)
+//            if (comboBoxMaterial.SelectedIndex == 0)
+            if (TypeMaterial == 0)
             {
                 PhotonInteractionCoefficients = PhotonInteractionCoefficientsNickel;
                 density = densityNickel;
@@ -715,7 +769,8 @@ namespace Lens
 
             }
 
-            if (comboBoxMaterial.SelectedIndex == 1)
+//            if (comboBoxMaterial.SelectedIndex == 1)
+            if (TypeMaterial == 1)
             {
                 PhotonInteractionCoefficients = PhotonInteractionCoefficientsGold;
                 density = densityGold;
@@ -723,7 +778,8 @@ namespace Lens
 
             }
 
-            if (comboBoxMaterial.SelectedIndex == 2)
+ //           if (comboBoxMaterial.SelectedIndex == 2)
+            if (TypeMaterial == 2)
             {
                 PhotonInteractionCoefficients = PhotonInteractionCoefficientsAluminium;
                 density = densityAluminium;
